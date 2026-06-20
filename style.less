@@ -1,0 +1,65 @@
+/* Definindo as variáveis que faltavam no seu código original */
+@dots-color: #ffffff;
+@rotate-time: 3s;
+@rotate-delay: 0.1;
+
+#dna {
+  display: flex;
+  gap: 8px;
+  perspective: 1000px;
+}
+
+#dna div {
+  width: 2px;
+  height: 40px;
+  background-color: #333;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+#dna div::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -4px;
+  right: -4px;
+  height: 10px;
+  background-color: @dots-color;
+  border-radius: 5px;
+  animation: rotation @rotate-time linear infinite reverse;
+  z-index: 1;
+}
+
+#dna div::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: -4px;
+  right: -4px;
+  height: 10px;
+  background-color: @dots-color;
+  border-radius: 5px;
+  animation: rotation @rotate-time linear infinite reverse;
+  z-index: 1;
+}
+
+@iterations: 30;
+.loop (@i) when (@i > 0) {
+  @delay: (@i * @rotate-delay - 60);
+  #dna div:nth-child(@{i}){
+    animation-delay: ~"@{delay}s";
+  }
+  #dna div:nth-child(@{i})::before{
+    animation-delay: ~"@{delay}s";
+  }
+  #dna div:nth-child(@{i})::after{
+    animation-delay: ~"@{delay}s";
+  }
+  .loop(@i - 1);
+}
+.loop(@iterations);
+
+@-webkit-keyframes rotation {
+    from { transform: rotateX(0deg); }
+    to { transform: rotateX(359deg); }
+}
