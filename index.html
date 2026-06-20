@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LILY // Sistema Cognitivo</title>
+    
+    <script src="https://unpkg.com/brain.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/less" ></script>
+    
+    <link rel="stylesheet/less" type="text/css" href="style.less" />
+    <style>
+        /* Estilos base em CSS puro para o terminal escuro e limpo */
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #terminal {
+            width: 80%;
+            max-width: 600px;
+            height: 50vh;
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.02);
+        }
+        .message { margin-bottom: 10px; }
+        .user { color: #888; }
+        .lily { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .system { color: #444; font-style: italic; }
+        
+        #controls {
+            display: flex;
+            gap: 10px;
+            width: 80%;
+            max-width: 600px;
+        }
+        input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px;
+            font-family: inherit;
+        }
+        input:focus { outline: none; border-color: #666; }
+        button {
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+        button:hover { background: #222; border-color: #888; }
+        
+        /* Container do DNA */
+        #dna-container {
+            margin-bottom: 40px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="dna-container">
+        <div id="dna">
+            <div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
+        </div>
+    </div>
+
+    <div id="terminal">
+        <div class="message system">LILY [V 0.0.1] - NÚCLEO INICIADO. REDE NEURAL VAZIA.</div>
+    </div>
+
+    <div id="controls">
+        <input type="text" id="userInput" placeholder="Fale ou ensine algo..." autocomplete="off">
+        <button id="sendBtn">Enviar</button>
+        <button id="teachBtn">Corrigir/Ensinar</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
