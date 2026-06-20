@@ -6,77 +6,61 @@
     <title>LILY // Sistema Cognitivo</title>
     
     <script src="https://unpkg.com/brain.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/less" ></script>
     
-    <style type="text/less">
-        @dots-color: #ffffff;
-        @rotate-time: 3s;
-        @rotate-delay: 0.1;
+    <style>
+        /* =========================================
+           GENÉTICA DA LILY (CSS PURO + VARIÁVEIS)
+           ========================================= */
+        #dna-container {
+            margin-bottom: 40px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         #dna {
-          display: flex;
-          gap: 8px;
-          perspective: 1000px;
+            display: flex;
+            gap: 8px;
+            perspective: 1000px;
         }
 
         #dna div {
-          width: 2px;
-          height: 40px;
-          background-color: #333;
-          position: relative;
-          transform-style: preserve-3d;
+            width: 2px;
+            height: 40px;
+            background-color: #333;
+            position: relative;
+            transform-style: preserve-3d;
+            /* A variável --delay será injetada pelo script abaixo */
+            animation: rotation 3s linear infinite reverse;
+            animation-delay: var(--delay);
         }
 
-        #dna div::before {
-          content: "";
-          position: absolute;
-          top: -10px;
-          left: -4px;
-          right: -4px;
-          height: 10px;
-          background-color: @dots-color;
-          border-radius: 5px;
-          animation: rotation @rotate-time linear infinite reverse;
-          z-index: 1;
-        }
-
+        #dna div::before, 
         #dna div::after {
-          content: "";
-          position: absolute;
-          bottom: -10px;
-          left: -4px;
-          right: -4px;
-          height: 10px;
-          background-color: @dots-color;
-          border-radius: 5px;
-          animation: rotation @rotate-time linear infinite reverse;
-          z-index: 1;
+            content: "";
+            position: absolute;
+            height: 10px;
+            left: -4px;
+            right: -4px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            animation: rotation 3s linear infinite reverse;
+            animation-delay: var(--delay);
+            z-index: 1;
         }
 
-        @iterations: 30;
-        .loop (@i) when (@i > 0) {
-          @delay: (@i * @rotate-delay - 60);
-          #dna div:nth-child(@{i}){
-            animation-delay: ~"@{delay}s";
-          }
-          #dna div:nth-child(@{i})::before{
-            animation-delay: ~"@{delay}s";
-          }
-          #dna div:nth-child(@{i})::after{
-            animation-delay: ~"@{delay}s";
-          }
-          .loop(@i - 1);
-        }
-        .loop(@iterations);
+        #dna div::before { top: -10px; }
+        #dna div::after { bottom: -10px; }
 
-        @-webkit-keyframes rotation {
+        @keyframes rotation {
             from { transform: rotateX(0deg); }
             to { transform: rotateX(359deg); }
         }
-    </style>
 
-    <style>
-        /* Estilos base em CSS puro para o terminal escuro e limpo */
+        /* =========================================
+           ESTILOS DO TERMINAL
+           ========================================= */
         body {
             background-color: #050505;
             color: #e0e0e0;
@@ -110,14 +94,17 @@
             gap: 10px;
             width: 80%;
             max-width: 600px;
+            flex-wrap: wrap; /* Permite que os botões extras desçam de linha */
+            justify-content: center;
         }
         input {
-            flex: 1;
+            flex: 1 1 100%;
             background: #0a0a0a;
             border: 1px solid #333;
             color: #fff;
             padding: 10px;
             font-family: inherit;
+            margin-bottom: 10px;
         }
         input:focus { outline: none; border-color: #666; }
         button {
@@ -128,16 +115,9 @@
             cursor: pointer;
             font-family: inherit;
             transition: 0.2s;
+            flex: 1;
         }
         button:hover { background: #222; border-color: #888; }
-        
-        /* Container do DNA */
-        #dna-container {
-            margin-bottom: 40px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-        }
     </style>
 </head>
 <body>
@@ -153,15 +133,21 @@
         </div>
     </div>
 
-    <div id="terminal">
-        <div class="message system">LILY [V 0.0.1] - NÚCLEO INICIADO. REDE NEURAL VAZIA.</div>
-    </div>
+    <div id="terminal"></div>
 
     <div id="controls">
-        <input type="text" id="userInput" placeholder="Fale ou ensine algo..." autocomplete="off">
-        <button id="sendBtn">Enviar</button>
-        <button id="teachBtn">Corrigir/Ensinar</button>
+        <input type="text" id="userInput" placeholder="Insira o padrão de dados..." autocomplete="off">
+        <button id="sendBtn">Processar</button>
+        <button id="teachBtn">Injetar Conhecimento</button>
     </div>
+
+    <script>
+        document.querySelectorAll('#dna div').forEach((div, index) => {
+            // A mesma matemática que você criou: (@i * @rotate-delay - 60)
+            const delay = ((index + 1) * 0.1 - 60) + 's';
+            div.style.setProperty('--delay', delay);
+        });
+    </script>
 
     <script src="app.js"></script>
 </body>
