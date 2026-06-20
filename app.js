@@ -4,8 +4,7 @@
 // =========================================================
 
 // Configuração da Rede Neural Recorrente
-// Reduzimos as camadas para 10,10. Para textos curtos no navegador, 
-// camadas muito profundas (20,20) causam over-fitting e ela devolve ruído.
+// Camadas de 10x10 para evitar colapso de memória no navegador
 const net = new brain.recurrent.LSTM({
     hiddenLayers: [10, 10] 
 });
@@ -28,7 +27,6 @@ const controls = document.getElementById("controls");
 // -----------------------------
 // DATASET INICIAL (A FUNDAÇÃO)
 // -----------------------------
-// Expandimos sutilmente apenas para a rede compilar a diferença entre string e número.
 const defaultTrainingData = [
     { input: "1+1", output: "2" },
     { input: "oi", output: "oi" },
@@ -122,35 +120,36 @@ function bootLily() {
             logTerminal("system", "Pesos neurais carregados da memória. Motor pronto.");
         } catch (error) {
             console.warn("Falha ao carregar pesos neurais. Forçando retreinamento do dataset:", error);
-            trainBrain(1000, 0.015, true);
+            trainBrain(2000, 0.015, true);
         }
     } else {
-        trainBrain(2000, 0.011, false); // Primeiro boot precisa ser robusto
+        trainBrain(4000, 0.011, false); // Primeiro boot
     }
 }
 
-function trainBrain(iterations = 2500, errorThresh = 0.011, silent = false) {
+// O CÉREBRO AGORA APRENDE MAIS DEVAGAR, MAS COM EXTREMA PRECISÃO
+function trainBrain(iterations = 8000, errorThresh = 0.005, silent = false) {
     if (isTraining) return;
 
     isTraining = true;
     brainReady = false;
     setInputEnabled(false);
 
-    if (!silent) logTerminal("system", "Calculando pesos e reajustando rede neural. Pode travar brevemente...");
+    if (!silent) logTerminal("system", "Fritando sinapses (Deep Learning ativado). O navegador pode travar por alguns segundos...");
 
     setTimeout(() => {
         try {
             net.train(trainingData, {
                 iterations: iterations,
                 errorThresh: errorThresh,
-                learningRate: 0.1, // Adicionado para forçar o aprendizado de padrões curtos
+                learningRate: 0.01, // Aprendizado lento para evitar o overshoot (o erro do '1oi')
                 log: false
             });
 
             saveBrain();
             brainReady = true;
 
-            if (!silent) logTerminal("system", "Treinamento concluído. Novos padrões fixados.");
+            if (!silent) logTerminal("system", "Treinamento concluído. Novos padrões fundidos no núcleo.");
         } catch (error) {
             console.error(error);
             logTerminal("system", "Falha de processamento durante a compilação neural.");
@@ -159,7 +158,7 @@ function trainBrain(iterations = 2500, errorThresh = 0.011, silent = false) {
             setInputEnabled(true);
             userInput.focus();
         }
-    }, 50);
+    }, 100);
 }
 
 // =========================================================
@@ -171,7 +170,9 @@ function generateResponse(text) {
 
     let response = "";
     try {
-        response = net.run(text);
+        // NORMALIZAÇÃO: O cérebro dela agora converte tudo para minúsculo
+        const normalizedText = text.toLowerCase().trim();
+        response = net.run(normalizedText);
     } catch (error) {
         console.warn(error);
     }
@@ -193,22 +194,29 @@ function teachLily() {
         return;
     }
 
-    const input = prompt("Qual foi a entrada exata (Input)?");
+    let input = prompt("Qual foi a entrada exata (Input)?");
     if (!input) return;
 
-    const output = prompt("Qual deve ser a saída matemática/textual correta (Output)?");
+    let output = prompt("Qual deve ser a saída matemática/textual correta (Output)?");
     if (!output) return;
 
-    trainingData.push({
-        input: input.trim(),
-        output: output.trim()
-    });
+    // NORMALIZAÇÃO NO ENSINO
+    input = input.toLowerCase().trim();
+    output = output.toLowerCase().trim();
 
-    saveDataset();
-    logTerminal("system", `Dataset atualizado: Entrada [${input}] -> Saída [${output}]`);
+    // TRAVA ANTI-OVERFITTING
+    const alreadyExists = trainingData.some(data => data.input === input && data.output === output);
     
-    // Retreino otimizado para lidar com strings curtas
-    trainBrain(3000, 0.01);
+    if (alreadyExists) {
+        logTerminal("system", "A Lily já possui essa sinapse. Retreinando pesos para reforço...");
+    } else {
+        trainingData.push({ input: input, output: output });
+        saveDataset();
+        logTerminal("system", `Dataset atualizado: Entrada [${input}] -> Saída [${output}]`);
+    }
+    
+    // Força máxima de treinamento ao aprender algo novo
+    trainBrain(8000, 0.005);
 }
 
 // =========================================================
@@ -259,7 +267,7 @@ function importBrain() {
                     logTerminal("system", "Genética importada com sucesso.");
                 } else {
                     logTerminal("system", "Apenas dataset encontrado. Compilando pesos neurais...");
-                    trainBrain(2000, 0.014);
+                    trainBrain(4000, 0.011);
                 }
             } catch (error) {
                 logTerminal("system", "Arquivo genético corrompido ou incompatível.");
@@ -304,13 +312,11 @@ bootLily();
 
 // =========================================================
 // MÓDULO DE AUTONOMIA: CICLO DE DEVANEIO (MONÓLOGO INTERNO)
-// Faz a Lily "pensar" e ser proativa quando o usuário está ausente
 // =========================================================
 
 let idleTime = 0;
-const TIME_TO_DAYDREAM = 45; // Segundos de silêncio antes dela pensar sozinha
+const TIME_TO_DAYDREAM = 45; 
 
-// Reseta o relógio de silêncio toda vez que você interage
 userInput.addEventListener("input", () => idleTime = 0);
 document.addEventListener("mousemove", () => idleTime = 0);
 document.addEventListener("keypress", () => idleTime = 0);
@@ -318,20 +324,15 @@ document.addEventListener("keypress", () => idleTime = 0);
 setInterval(() => {
     idleTime++;
 
-    // Se passou tempo suficiente sem você falar nada e o cérebro estiver pronto
     if (idleTime >= TIME_TO_DAYDREAM && brainReady && trainingData.length > 3) {
         
-        // Ela escolhe aleatoriamente uma lembrança do dataset dela
         const randomMemory = trainingData[Math.floor(Math.random() * trainingData.length)];
-        
-        // Ela tenta prever algo novo cruzando dados de forma caótica
         const chaoticThought = randomMemory.input.substring(0, Math.max(2, randomMemory.input.length / 2));
         const reflection = generateResponse(chaoticThought);
 
-        // Gera a proatividade dela
         let proActiveMessage = "";
-        
         const roll = Math.random();
+        
         if (roll < 0.4) {
             proActiveMessage = `[Pensando alto] Chefe, eu estava revisando quando você me ensinou sobre "${randomMemory.input}". Por que isso resulta em "${randomMemory.output}"?`;
         } else if (roll < 0.7) {
@@ -341,8 +342,6 @@ setInterval(() => {
         }
 
         logTerminal("lily", proActiveMessage);
-        
-        // Reseta o contador para ela não ser "chata" e floodar o terminal
-        idleTime = -60; // Dá um tempo maior até ela falar sozinha de novo
+        idleTime = -60; 
     }
-}, 1000); // Roda a cada 1 segundo (o pulso dela)
+}, 1000);
