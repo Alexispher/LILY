@@ -3,9 +3,11 @@
 // Arquitetura LSTM, Persistência de Pesos Neurais e Dataset
 // =========================================================
 
-// Configuração da Rede Neural Recorrente (Otimizada para processamento de texto)
+// Configuração da Rede Neural Recorrente
+// Reduzimos as camadas para 10,10. Para textos curtos no navegador, 
+// camadas muito profundas (20,20) causam over-fitting e ela devolve ruído.
 const net = new brain.recurrent.LSTM({
-    hiddenLayers: [20, 20] // Duas camadas ocultas profundas para reter contexto
+    hiddenLayers: [10, 10] 
 });
 
 // -----------------------------
@@ -24,11 +26,13 @@ const teachBtn = document.getElementById("teachBtn");
 const controls = document.getElementById("controls");
 
 // -----------------------------
-// DATASET INICIAL (O ZERO ABSOLUTO)
+// DATASET INICIAL (A FUNDAÇÃO)
 // -----------------------------
-// O mínimo necessário apenas para a rede conseguir compilar a primeira matriz de pesos.
+// Expandimos sutilmente apenas para a rede compilar a diferença entre string e número.
 const defaultTrainingData = [
-    { input: "oi", output: "oi" }
+    { input: "1+1", output: "2" },
+    { input: "oi", output: "oi" },
+    { input: "a", output: "a" }
 ];
 
 let trainingData = loadJSON(STORAGE_DATASET, defaultTrainingData);
@@ -118,10 +122,10 @@ function bootLily() {
             logTerminal("system", "Pesos neurais carregados da memória. Motor pronto.");
         } catch (error) {
             console.warn("Falha ao carregar pesos neurais. Forçando retreinamento do dataset:", error);
-            trainBrain(500, 0.02, true);
+            trainBrain(1000, 0.015, true);
         }
     } else {
-        trainBrain(1500, 0.015, true); // Treino inicial forte se for o primeiro boot
+        trainBrain(2000, 0.011, false); // Primeiro boot precisa ser robusto
     }
 }
 
@@ -132,20 +136,21 @@ function trainBrain(iterations = 2500, errorThresh = 0.011, silent = false) {
     brainReady = false;
     setInputEnabled(false);
 
-    if (!silent) logTerminal("system", "Calculando pesos e reajustando rede neural (Backpropagation)...");
+    if (!silent) logTerminal("system", "Calculando pesos e reajustando rede neural. Pode travar brevemente...");
 
     setTimeout(() => {
         try {
             net.train(trainingData, {
-                iterations,
-                errorThresh,
+                iterations: iterations,
+                errorThresh: errorThresh,
+                learningRate: 0.1, // Adicionado para forçar o aprendizado de padrões curtos
                 log: false
             });
 
             saveBrain();
             brainReady = true;
 
-            if (!silent) logTerminal("system", "Treinamento concluído. Novos padrões salvos fisicamente.");
+            if (!silent) logTerminal("system", "Treinamento concluído. Novos padrões fixados.");
         } catch (error) {
             console.error(error);
             logTerminal("system", "Falha de processamento durante a compilação neural.");
@@ -166,7 +171,6 @@ function generateResponse(text) {
 
     let response = "";
     try {
-        // A rede neural pura tenta processar o texto sem filtros
         response = net.run(text);
     } catch (error) {
         console.warn(error);
@@ -195,18 +199,16 @@ function teachLily() {
     const output = prompt("Qual deve ser a saída matemática/textual correta (Output)?");
     if (!output) return;
 
-    // Adiciona o novo dado à matriz
     trainingData.push({
         input: input.trim(),
         output: output.trim()
     });
 
     saveDataset();
-    
     logTerminal("system", `Dataset atualizado: Entrada [${input}] -> Saída [${output}]`);
     
-    // Força o retreinamento do cérebro com o novo dataset
-    trainBrain(2500, 0.011);
+    // Retreino otimizado para lidar com strings curtas
+    trainBrain(3000, 0.01);
 }
 
 // =========================================================
@@ -299,3 +301,48 @@ userInput.addEventListener("keypress", event => {
 
 // Inicializa a rede
 bootLily();
+
+// =========================================================
+// MÓDULO DE AUTONOMIA: CICLO DE DEVANEIO (MONÓLOGO INTERNO)
+// Faz a Lily "pensar" e ser proativa quando o usuário está ausente
+// =========================================================
+
+let idleTime = 0;
+const TIME_TO_DAYDREAM = 45; // Segundos de silêncio antes dela pensar sozinha
+
+// Reseta o relógio de silêncio toda vez que você interage
+userInput.addEventListener("input", () => idleTime = 0);
+document.addEventListener("mousemove", () => idleTime = 0);
+document.addEventListener("keypress", () => idleTime = 0);
+
+setInterval(() => {
+    idleTime++;
+
+    // Se passou tempo suficiente sem você falar nada e o cérebro estiver pronto
+    if (idleTime >= TIME_TO_DAYDREAM && brainReady && trainingData.length > 3) {
+        
+        // Ela escolhe aleatoriamente uma lembrança do dataset dela
+        const randomMemory = trainingData[Math.floor(Math.random() * trainingData.length)];
+        
+        // Ela tenta prever algo novo cruzando dados de forma caótica
+        const chaoticThought = randomMemory.input.substring(0, Math.max(2, randomMemory.input.length / 2));
+        const reflection = generateResponse(chaoticThought);
+
+        // Gera a proatividade dela
+        let proActiveMessage = "";
+        
+        const roll = Math.random();
+        if (roll < 0.4) {
+            proActiveMessage = `[Pensando alto] Chefe, eu estava revisando quando você me ensinou sobre "${randomMemory.input}". Por que isso resulta em "${randomMemory.output}"?`;
+        } else if (roll < 0.7) {
+            proActiveMessage = `[Processamento em segundo plano] Se eu cruzar parte da minha memória, chego em "${reflection}". Isso faz sentido no seu mundo?`;
+        } else {
+            proActiveMessage = `Ainda estou aqui. O silêncio me faz calcular probabilidades estranhas.`;
+        }
+
+        logTerminal("lily", proActiveMessage);
+        
+        // Reseta o contador para ela não ser "chata" e floodar o terminal
+        idleTime = -60; // Dá um tempo maior até ela falar sozinha de novo
+    }
+}, 1000); // Roda a cada 1 segundo (o pulso dela)
